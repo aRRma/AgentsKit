@@ -1,7 +1,7 @@
 ---
 name: arrma-spec-reviewer
 description: Независимо сверяет анализ, план или код этапа с файлом требований. Передавай путь к требованиям, что проверять и, для этапа, номер этапа в plan.md. Без своих выводов и отчёта автора.
-disallowedTools: Edit, Write, NotebookEdit, Agent, mcp__claude_ai_Claude_Docs, mcp__plugin_github_github, mcp__plugin_mongodb_mongodb, mcp__plugin_playwright_playwright, mcp__tg
+disallowedTools: Edit, Write, NotebookEdit, Agent, mcp__claude_ai_Claude_Docs, mcp__plugin_github_github, mcp__plugin_mongodb_mongodb, mcp__plugin_playwright_playwright, mcp__tg, mcp__plugin_telegram_telegram
 model: sonnet
 effort: high
 ---

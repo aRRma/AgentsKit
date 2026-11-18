@@ -1,7 +1,7 @@
 ---
 name: arrma-simplifier
 description: Ищет, что можно убрать или упростить в анализе, плане или изменениях кода без потери требований. Передавай только пути к файлам задачи и диапазон диффа, без своих выводов.
-disallowedTools: Edit, Write, NotebookEdit, Agent, mcp__claude_ai_Claude_Docs, mcp__plugin_github_github, mcp__plugin_mongodb_mongodb, mcp__plugin_playwright_playwright, mcp__tg
+disallowedTools: Edit, Write, NotebookEdit, Agent, mcp__claude_ai_Claude_Docs, mcp__plugin_github_github, mcp__plugin_mongodb_mongodb, mcp__plugin_playwright_playwright, mcp__tg, mcp__plugin_telegram_telegram
 model: sonnet
 effort: high
 ---

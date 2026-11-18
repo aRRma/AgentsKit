@@ -1,7 +1,7 @@
 ---
 name: arrma-finding-verifier
 description: Независимо перепроверяет по коду находки ревью и аудита, а также предложения по упрощению, до исправлений. Передавай только находки и область проверки, без своих выводов.
-disallowedTools: Edit, Write, NotebookEdit, Agent, mcp__claude_ai_Claude_Docs, mcp__plugin_github_github, mcp__plugin_mongodb_mongodb, mcp__plugin_playwright_playwright, mcp__tg
+disallowedTools: Edit, Write, NotebookEdit, Agent, mcp__claude_ai_Claude_Docs, mcp__plugin_github_github, mcp__plugin_mongodb_mongodb, mcp__plugin_playwright_playwright, mcp__tg, mcp__plugin_telegram_telegram
 model: opus
 effort: high
 ---

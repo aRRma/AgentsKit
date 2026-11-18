@@ -1,6 +1,6 @@
 ---
 name: arrma-verify-claims
-description: Проверяет утверждения о коде по самому коду. Используй, когда просят объяснить, как работает код, или проверить документацию, CLAUDE.md, сводку либо отдельное утверждение. Для перепроверки шага задачи есть arrma-recheck.
+description: Проверяет утверждения о коде по самому коду. Используй, когда просят объяснить, как работает код, или проверить документацию, CLAUDE.md, сводку либо отдельное утверждение. Для перепроверки шага задачи есть arrma-recheck, для полного аудита всей документации — arrma-docs-audit.
 argument-hint: "[что проверить] [model=...] [effort=...]"
 allowed-tools: Bash(git status *) Bash(git log *) Bash(git grep *) Bash(git ls-files *) Bash(git diff *) Bash(git show *) Bash(git worktree list *) Bash(git rev-parse *) PowerShell(git status *) PowerShell(git log *) PowerShell(git grep *) PowerShell(git ls-files *) PowerShell(git diff *) PowerShell(git show *) PowerShell(git worktree list *) PowerShell(git rev-parse *)
 ---
@@ -21,7 +21,7 @@ allowed-tools: Bash(git status *) Bash(git log *) Bash(git grep *) Bash(git ls-f
    - `UNVERIFIED`: кодом не решить. Причина.
    Не повышай статус ради полноты: лучше `UNVERIFIED`, чем догадка.
 5. **Сверка цитат.** Открой каждый `file:line` заново и убедись, что цитата стоит там. Не совпала — исправь место или цитату по коду, а нет подтверждения — смени статус. Утверждение ради чистого результата не удаляй.
-   Если в `CLAUDE.md` указана команда сверки цитат, сохрани утверждения в JSON в `~/.arrma-tmp/` с уникальным именем и запусти её. Поля: `claim`, `status`; для CONFIRMED и REFUTED ещё `file`, `line`, `quote`, при другой ветке `ref`; для NOT_FOUND `pattern` и `path` (папка кода, без проверяемого документа); для UNVERIFIED `reason`.
+   Если в `CLAUDE.md` указана команда сверки цитат, сохрани утверждения в JSON в `~/.arrma-tmp/` с уникальным именем и запусти её. Поля: `claim`, `status`; для CONFIRMED и REFUTED ещё `file`, `line`, `quote`, при другой ветке `ref`; для NOT_FOUND `pattern` и `path` (папка кода, без проверяемого документа); для UNVERIFIED `reason`. Код выхода 0 — всё сходится, 3 — расхождения: исправь их; 2 — неверный вход: итога нет, исправь JSON.
    Ни перечитывание, ни команда не доказывают, что цитата подтверждает утверждение. Это решаешь ты, читая контекст.
 6. **Важные выводы.** Для аудита и выводов, на которых строится решение, запусти `arrma-finding-verifier` с утверждениями и областью. Его цитаты сверь так же, как в шаге 5.
 

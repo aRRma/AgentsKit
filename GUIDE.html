@@ -229,7 +229,7 @@ ol.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column;
       </div>
       <div class="c k">
         <h3>/arrma-recheck</h3>
-        <p>После любого шага. Можно дописать ответ на вопрос агента или своё замечание.</p>
+        <p>После любого шага. После ответа не по задаче (аудит, объяснение) — проверит этот ответ. Можно дописать ответ на вопрос агента или своё замечание.</p>
         <div class="ex"><span class="lbl">Примеры</span>
           <div class="say k"><span><b>/arrma-recheck</b></span><button class="copy" data-copy="/arrma-recheck">копия</button></div>
           <div class="say k"><span><b>/arrma-recheck</b> model=sonnet effort=medium</span><button class="copy" data-copy="/arrma-recheck model=sonnet effort=medium">копия</button></div></div>
@@ -249,7 +249,15 @@ ol.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column;
         <div class="ex"><span class="lbl">Примеры</span>
           <div class="say"><span><b>/arrma-verify-claims</b> правда ли, что TariffId в API v2 имеет тип string?</span><button class="copy" data-copy="/arrma-verify-claims ">копия</button></div>
           <div class="say"><span><b>/arrma-verify-claims</b> проверь docs/API.md по коду</span><button class="copy" data-copy="/arrma-verify-claims проверь docs/API.md по коду">копия</button></div></div>
-        <p class="get"><b>Получишь:</b> таблицу с ответом по каждому утверждению: подтверждено, опровергнуто, не найдено или не проверить. К каждому место в коде и цитата.</p>
+        <p class="get"><b>Получишь:</b> таблицу с ответом по каждому утверждению: подтверждено, опровергнуто, не найдено или не проверить. К подтверждённому и опровергнутому — место в коде и цитата, к не найденному — что и где искал, к непроверенному — причина.</p>
+      </div>
+      <div class="c x">
+        <h3>/arrma-docs-audit</h3>
+        <p>Когда надо проверить по коду всю документацию проекта, а не одно утверждение.</p>
+        <div class="ex"><span class="lbl">Примеры</span>
+          <div class="say"><span><b>/arrma-docs-audit</b></span><button class="copy" data-copy="/arrma-docs-audit">копия</button></div>
+          <div class="say"><span><b>/arrma-docs-audit</b> docs README.md</span><button class="copy" data-copy="/arrma-docs-audit ">копия</button></div></div>
+        <p class="get"><b>Получишь:</b> отчёт в <code>docs/audits/</code>: ошибки с местом в коде и правкой, не описанное, противоречия между документами, повторы одной ошибки, что не проверено и какие команды запускались. В чате коротко и вопрос, исправлять ли. Сам документацию не правит.</p>
       </div>
       <div class="c x">
         <h3>/arrma-eli5</h3>
@@ -316,9 +324,9 @@ ol.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column;
         <h3>Кто на какой модели</h3>
         <ul>
           <li>Поиск ошибок и опровержение находок: последняя Opus.</li>
-          <li>Упрощение, сверка с требованиями, сбор фактов в анализе, статус и описание задачи: последняя Sonnet.</li>
+          <li>Упрощение, сверка с требованиями, сбор фактов в анализе и аудите документации, статус, описание задачи и проверка <code>CLAUDE.md</code>: последняя Sonnet.</li>
           <li>Остальное идёт на модели твоей сессии.</li>
-          <li>Поменять на один раз: допиши <code>model=</code> и <code>effort=</code> к команде.</li>
+          <li>Поменять на один раз: допиши <code>model=</code> и <code>effort=</code> к <code>/arrma-task-analysis</code>, <code>/arrma-recheck</code>, <code>/arrma-verify-claims</code> или <code>/arrma-docs-audit</code>. Они меняют модель только субагентов.</li>
           <li>Модели: <code>opus</code>, <code>sonnet</code>, <code>haiku</code>, <code>fable</code>.</li>
           <li>Усилие: <code>low</code>, <code>medium</code>, <code>high</code>, <code>xhigh</code>, <code>max</code>.</li>
         </ul>
@@ -362,7 +370,7 @@ ol.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column;
   <section id="install">
     <h2>Установка</h2>
     <div class="install">
-      <div class="bar"><span>PowerShell, из папки arrma-kit</span><button class="copy" data-copy-from="inst">копия</button></div>
+      <div class="bar"><span>PowerShell, из папки клона набора (AgentsKit)</span><button class="copy" data-copy-from="inst">копия</button></div>
 <pre id="inst">New-Item -ItemType Directory -Force "$HOME/.claude/skills", "$HOME/.claude/agents", "$HOME/.claude/rules" | Out-Null
 Copy-Item skills/* "$HOME/.claude/skills/" -Recurse -Force
 Copy-Item agents/*.md "$HOME/.claude/agents/" -Force
@@ -378,7 +386,7 @@ Copy-Item rules/arrma.md "$HOME/.claude/rules/" -Force</pre>
     </ol>
     <div class="grid2">
       <div class="box"><span class="tag ok">Проверено</span>
-        <ul><li>В облаке (Linux): полный цикл на тестовом проекте C#, в том числе с <code>/clear</code> между шагами.</li><li>На ПК (Windows, VS Code): полный цикл на рабочем проекте, 2 этапа, тесты зелёные.</li><li>Модели агентов совпадают с раскладкой, <code>model=</code> их переключает.</li><li>Чтение из git идёт без запросов подтверждения.</li></ul></div>
+        <ul><li>В облаке (Linux): полный цикл на тестовом проекте C#, в том числе с <code>/clear</code> между шагами.</li><li>На ПК (Windows, VS Code): полный цикл на рабочем проекте, 2 этапа, тесты зелёные.</li><li>Модели агентов совпадают с раскладкой, <code>model=</code> их переключает.</li><li>Чтение из git идёт без запросов подтверждения.</li><li>Аудит документации <code>/arrma-docs-audit</code> на рабочем проекте (19 документов): нашёл все 11 подложенных ошибок.</li></ul></div>
       <div class="box"><span class="tag warn">Ещё не проверено</span>
         <ul><li>Правка про LSP: в прогонах на ПК агенты его не вызывали.</li><li>Имена MCP-серверов в запретах агентов.</li><li>Статус и описание задачи в VS Code.</li><li>Пять задач подряд с журналом (этап Б).</li></ul>
         <p class="small">План и журнал проверки: <code>ACCEPTANCE.md</code> и <code>ACCEPTANCE-log.md</code>.</p></div>
