@@ -1,0 +1,317 @@
+<!doctype html>
+<!-- Шаблон arrma-visual. Агент копирует файл, меняет data-created на время создания,
+     заполняет блоки с пометкой ЗАМЕНИТЬ и удаляет ненужные. Внешних запросов нет. -->
+<html lang="ru" data-created="2026-11-17T18:20">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Задача visual-docs: графическая документация в HTML</title>
+<style>
+/* Палитра из GUIDE.html. Синий = основное, оранжевый = акцент и рекомендация, зелёный = сделано. */
+:root {
+  --bg: #EEF1F5; --surface: #FFFFFF; --ink: #161D27; --muted: #586474; --line: #D3DAE3;
+  --step: #1B5AA3; --step-soft: #E1ECF9; --check: #B04A0A; --check-soft: #FCEADB;
+  --chip: #E6EAF0; --ok: #1C774A; --warn: #915500;
+  --sans: "Segoe UI", system-ui, sans-serif;
+  --mono: Consolas, "Cascadia Mono", monospace;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #10141A; --surface: #19202A; --ink: #E7EBF1; --muted: #9AA7B7; --line: #2B3543;
+  --step: #82B6F2; --step-soft: #1B2A3F; --check: #F2A56B; --check-soft: #38271A;
+  --chip: #232C38; --ok: #6DCB9C; --warn: #E3B55F; color-scheme: dark } }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--sans); padding: 32px 16px 64px; }
+.wrap { max-width: 940px; margin: 0 auto; display: flex; flex-direction: column; gap: 44px; }
+section { display: flex; flex-direction: column; gap: 14px; }
+h1 { font-size: 36px; line-height: 1.15; margin: 0; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+h2 { font-size: 24px; line-height: 1.25; margin: 0; font-weight: 700; text-wrap: balance; }
+h3 { font-size: 16px; margin: 0; font-weight: 600; }
+p { margin: 0; }
+.lead { color: var(--muted); font-size: 18px; max-width: 62ch; margin-top: 10px; }
+.meta { color: var(--muted); font-size: 13px; margin-top: 8px; }
+.sub { color: var(--muted); max-width: 70ch; }
+code { font-family: var(--mono); font-size: 0.88em; background: var(--chip); padding: 1px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+a { color: var(--step); }
+:focus-visible { outline: 2px solid var(--step); outline-offset: 2px; }
+
+/* метки: смысл несёт текст, цвет только помогает */
+.tag { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 8px; border-radius: 999px; background: var(--chip); color: var(--muted); }
+.tag.ok { color: var(--ok); } .tag.warn { color: var(--warn); } .tag.acc { color: var(--check); background: var(--check-soft); }
+.guess { border-bottom: 1px dashed var(--warn); }
+.guess::after { content: " (догадка)"; color: var(--warn); font-size: 0.85em; }
+
+/* схема */
+figure { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; overflow-x: auto; }
+figure svg { display: block; width: 100%; min-width: 560px; height: auto; }
+figcaption { margin-top: 10px; font-size: 15px; color: var(--muted); }
+figcaption b { color: var(--ink); }
+.node { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+.node.acc { fill: var(--check-soft); stroke: var(--check); }
+.ntext { fill: var(--ink); font: 600 14px var(--sans); }
+.nsub { fill: var(--muted); font: 12px var(--mono); }
+.edge { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+.etext { fill: var(--muted); font: italic 12px var(--sans); }
+.arrowhead { fill: var(--muted); }
+
+/* карточки */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.card.acc { border-color: var(--check); }
+.card .tag { align-self: flex-start; }
+.card p { font-size: 15px; color: var(--muted); }
+
+/* таблица */
+.tbl { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 13px; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.mark { background: var(--check-soft); }
+
+/* дорожка этапов */
+.track { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.track li { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--line); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.track li.done { border-top-color: var(--ok); }
+.track li.now { border-top-color: var(--check); }
+.track .st { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.track li.done .st { color: var(--ok); } .track li.now .st { color: var(--check); }
+
+/* вопросы */
+fieldset.q { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+fieldset.q legend { float: left; width: 100%; padding: 0; font-weight: 600; font-size: 17px; }
+.q .why { color: var(--muted); font-size: 14.5px; }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.opt:hover { border-color: var(--step); }
+.opt:has(input:checked) { border-color: var(--step); background: var(--step-soft); }
+.opt input { margin-top: 4px; accent-color: var(--step); }
+.opt .txt { flex: 1; min-width: 0; }
+.opt .txt span:not(.tag) { color: var(--muted); }
+.q .clear { align-self: flex-start; font: 13px var(--sans); color: var(--muted); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+.opt.rec .tag { margin-left: 6px; }
+.own { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--muted); }
+.own textarea { font: 15px/1.45 var(--sans); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-height: 64px; resize: vertical; }
+.savebar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
+.savebar button { font: 600 15px var(--sans); color: #FFFFFF; background: var(--step); border: 0; border-radius: 8px; padding: 9px 18px; cursor: pointer; }
+@media (prefers-color-scheme: dark) { .savebar button { color: #10141A; } }
+.savebar .status { color: var(--muted); font-size: 14px; flex: 1; min-width: 200px; }
+
+@media (max-width: 760px) {
+  body { padding-top: 20px; }
+  h1 { font-size: 28px; } h2 { font-size: 21px; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <header>
+    <h1>Скилл написан и установлен — осталось пройти живой прогон и описать его в README</h1>
+    <p class="lead">Шаблон страницы готов и проверен (этап 1). <code>SKILL.md</code> лежит в наборе и в <code>~/.claude/skills/</code> (этап 2). Эта страница — сам живой прогон: ваш ответ на Q1 проверит путь «страница → файл ответов → «Решения»».</p>
+    <p class="meta">задача · <code>visual-docs</code> · 2026-11-17 · источники: <code>docs/tasks/visual-docs/requirements.md</code>, <code>plan.md</code>, <code>skills/arrma-visual/SKILL.md</code></p>
+  </header>
+
+  <figure>
+    <svg viewBox="0 0 780 216" role="img" aria-label="Путь страницы: скилл создаёт страницу, Playwright проверяет, пользователь отвечает, файл ответов попадает в Решения">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="arrowhead" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      <rect class="node" x="10" y="16" width="200" height="64" rx="10"/>
+      <text class="ntext" x="110" y="44" text-anchor="middle">/arrma-visual</text>
+      <text class="nsub" x="110" y="64" text-anchor="middle">уточняет и ждёт</text>
+      <rect class="node" x="290" y="16" width="200" height="64" rx="10"/>
+      <text class="ntext" x="390" y="44" text-anchor="middle">Страница</text>
+      <text class="nsub" x="390" y="64" text-anchor="middle">visual/task.html</text>
+      <rect class="node" x="570" y="16" width="200" height="64" rx="10"/>
+      <text class="ntext" x="670" y="44" text-anchor="middle">Проверка Playwright</text>
+      <text class="nsub" x="670" y="64" text-anchor="middle">page.route, без сервера</text>
+      <rect class="node acc" x="570" y="136" width="200" height="64" rx="10"/>
+      <text class="ntext" x="670" y="164" text-anchor="middle">Вы отвечаете</text>
+      <text class="nsub" x="670" y="184" text-anchor="middle">Chrome / Яндекс</text>
+      <rect class="node" x="290" y="136" width="200" height="64" rx="10"/>
+      <text class="ntext" x="390" y="164" text-anchor="middle">Файл ответов</text>
+      <text class="nsub" x="390" y="184" text-anchor="middle">task.answers.md</text>
+      <rect class="node" x="10" y="136" width="200" height="64" rx="10"/>
+      <text class="ntext" x="110" y="164" text-anchor="middle">«Решения»</text>
+      <text class="nsub" x="110" y="184" text-anchor="middle">requirements.md</text>
+      <path class="edge" d="M210,48 L288,48" marker-end="url(#ah)"/>
+      <text class="etext" x="250" y="38" text-anchor="middle">создаёт</text>
+      <path class="edge" d="M490,48 L568,48" marker-end="url(#ah)"/>
+      <text class="etext" x="530" y="38" text-anchor="middle">проходит</text>
+      <path class="edge" d="M670,80 L670,134" marker-end="url(#ah)"/>
+      <text class="etext" x="680" y="112">открываете</text>
+      <path class="edge" d="M570,168 L492,168" marker-end="url(#ah)"/>
+      <text class="etext" x="530" y="158" text-anchor="middle">сохраняете</text>
+      <path class="edge" d="M290,168 L212,168" marker-end="url(#ah)"/>
+      <text class="etext" x="250" y="158" text-anchor="middle">переносит</text>
+    </svg>
+    <figcaption><b>Сервер не нужен, а ответы возвращаются в задачу файлом.</b> Playwright отдаёт страницу с диска (<code>requirements.md:33</code>), ответы — Markdown рядом со страницей (<code>requirements.md:30</code>). Нижний ряд живым прогоном ещё не проверен (<code>plan.md:46</code>).</figcaption>
+  </figure>
+
+  <section>
+    <h2>Этап 2 ждёт только живого прогона</h2>
+    <ol class="track">
+      <li class="done"><span class="st">сделано</span><h3>1. Шаблон страницы</h3><p class="sub">темы, схема, карточки, вопросы; проверен в Playwright (<code>plan.md:24-26</code>)</p></li>
+      <li class="now"><span class="st">сейчас</span><h3>2. Скилл <code>arrma-visual</code></h3><p class="sub"><code>SKILL.md</code> написан и установлен; ждёт прогона <code>/arrma-visual задача</code> (<code>plan.md:47</code>)</p></li>
+      <li><span class="st">дальше</span><h3>3. Документация</h3><p class="sub"><code>README.md</code>, <code>GUIDE.html</code>, <code>ACCEPTANCE.md</code> (<code>plan.md:49-58</code>)</p></li>
+      <li><span class="st">дальше</span><h3>4. Полный прогон</h3><p class="sub">режим <code>код &lt;что&gt;</code> → <code>docs/visual/</code> (<code>plan.md:60-64</code>)</p></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Почти все требования закрывает этап 2</h2>
+    <p class="sub">Этапы — по строкам «Зачем» в <code>plan.md:11</code>, <code>:39</code>, <code>:57</code>; R4 закрыт анализом (<code>plan.md:68</code>).</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Требование</th><th>Этап</th><th>Где сейчас</th></tr></thead>
+      <tbody>
+        <tr><td>R1. Скилл делает HTML-страницу</td><td>2, 3</td><td>скилл есть; в <code>README.md</code> и <code>GUIDE.html</code> его ещё нет</td></tr>
+        <tr><td>R2. По этапу, вопросу, всей задаче</td><td>2</td><td>режимы — <code>SKILL.md:15-19</code></td></tr>
+        <tr><td>R3. Понятно и легко читать</td><td>1</td><td>шаблон готов</td></tr>
+        <tr><td>R4. Изучить скиллы в сети</td><td>—</td><td>закрыт анализом</td></tr>
+        <tr><td>R5. Один скилл или несколько</td><td>2</td><td>один скилл</td></tr>
+        <tr><td>R6. Проверка через Playwright MCP</td><td>2</td><td>этой страницей</td></tr>
+        <tr><td>R7. Ответы и «Сохранить» на странице</td><td>1</td><td>проверено в Playwright (<code>plan.md:26</code>)</td></tr>
+        <tr><td>R8. Агент сам читает ответы</td><td>2</td><td>ждёт вашего «закончил»</td></tr>
+        <tr><td>R9. Только по команде</td><td>2</td><td><code>disable-model-invocation: true</code> (<code>SKILL.md:5</code>)</td></tr>
+        <tr><td>R10. Уточнить перед созданием</td><td>2</td><td>было перед этой страницей</td></tr>
+        <tr><td>R11. Страницы и ответы в папке задачи</td><td>1, 2</td><td><code>docs/tasks/visual-docs/visual/</code></td></tr>
+        <tr><td>R12. Нет зависших серверов</td><td>2</td><td>сервера нет: <code>page.route</code></td></tr>
+        <tr><td>R13. Проверка без ручных действий</td><td>2</td><td>этой страницей</td></tr>
+        <tr><td>C1. Стиль arrma-kit, без пакетов</td><td>2, 3</td><td><code>skills/arrma-visual/SKILL.md</code> на русском</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Решения уже задают весь путь страницы</h2>
+    <div class="cards">
+      <div class="card"><span class="tag ok">когда</span><h3>Только по команде, после уточнения</h3><p>Случаи: анализ проблемы или фичи, этап, вся задача, разбор кода; PR — нет (<code>requirements.md:26</code>, <code>:31</code>).</p></div>
+      <div class="card"><span class="tag ok">где</span><h3>Папка задачи, иначе <code>docs/visual/</code></h3><p><code>&lt;папка задачи&gt;/visual/</code>; страница вне задачи — <code>docs/visual/</code> (<code>requirements.md:27</code>, <code>:35</code>).</p></div>
+      <div class="card"><span class="tag ok">ответы</span><h3>Выбор на странице, файл <code>.answers.md</code></h3><p>Вариант или свой текст; до «Сохранить» — в <code>localStorage</code>; браузеры — Chrome и Яндекс (<code>requirements.md:28</code>, <code>:30</code>, <code>:34</code>, <code>:38</code>).</p></div>
+      <div class="card"><span class="tag ok">проверка</span><h3>Playwright без сервера</h3><p><code>page.route</code> + <code>route.fulfill({ path })</code>: нет процесса, порта и конфига (<code>requirements.md:33</code>).</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Осталось четыре шага, первый — за вами</h2>
+    <div class="cards">
+      <div class="card acc"><span class="tag acc">вы</span><h3>Ответить на Q1 и написать «закончил»</h3><p>Ниже: выбор, «Сохранить» в эту папку, затем сообщение в чат — так проверяется R8 (<code>plan.md:46</code>).</p></div>
+      <div class="card"><span class="tag">агент</span><h3>Закрыть этап 2</h3><p>Отметить этап в <code>plan.md:30</code>. Строку «Ждёт» (<code>plan.md:81</code>) можно снять: <code>SKILL.md:23</code> уже требует новый <code>data-created</code>.</p></div>
+      <div class="card"><span class="tag warn">блок</span><h3>Этап 3 — после Q1</h3><p>В <code>README.md</code>, <code>GUIDE.html</code> и <code>ACCEPTANCE.md</code> лежат незакоммиченные правки <code>arrma-docs-audit</code> (<code>plan.md:55</code>).</p></div>
+      <div class="card"><span class="tag">агент</span><h3>Этап 4</h3><p>Ещё один вызов в режиме <code>код &lt;что&gt;</code>, страница — в <code>docs/visual/</code>.</p></div>
+    </div>
+  </section>
+
+  <section id="questions">
+    <h2>Вопросы к тебе</h2>
+    <p class="sub">Выбери вариант или напиши свой ответ и нажми «Сохранить». Ответы не пропадут при перезагрузке вкладки.</p>
+    <p class="sub" id="where"></p>
+      <fieldset class="q" data-q="Q1">
+        <legend>Q1. Как быть с чужими правками перед этапом 3?</legend>
+        <p class="why">Этап 3 правит <code>README.md</code>, <code>GUIDE.html</code> и <code>ACCEPTANCE.md</code>. Во всех трёх уже есть незакоммиченные правки скилла <code>arrma-docs-audit</code>: строка в таблице скиллов, карточка команды, «11 скиллов» (<code>git diff</code>). Без решения два скилла смешаются в одном диффе (<code>plan.md:55</code>).</p>
+        <label class="opt rec"><input type="radio" name="Q1" value="A"><span class="txt"><b>Сначала закоммитить правки arrma-docs-audit</b><span class="tag acc">рекомендую</span><br><span>этап 3 ляжет отдельным диффом; коммит — только по вашей просьбе</span></span></label>
+        <label class="opt"><input type="radio" name="Q1" value="B"><span class="txt"><b>Править поверх, коммитить вместе</b><br><span>быстрее, но в одном коммите будут два скилла</span></span></label>
+        <label class="opt"><input type="radio" name="Q1" value="C"><span class="txt"><b>Отложить этап 3</b><br><span>сначала довести задачу <code>docs-audit-skill</code></span></span></label>
+        <label class="own">Свой ответ<textarea name="Q1-own" rows="2"></textarea></label>
+      </fieldset>
+    <div class="savebar">
+      <button type="button" id="save">Сохранить</button>
+      <span class="status" id="status" role="status">Ответы ещё не сохранены в файл.</span>
+    </div>
+  </section>
+
+</main>
+<script>
+(() => {
+  const form = document.getElementById('questions');
+  if (!form) return;
+  const path = decodeURIComponent(location.pathname);
+  const answersName = path.split('/').pop().replace(/\.html?$/i, '') + '.answers.md';
+  const created = document.documentElement.dataset.created;
+  const key = 'arrma-visual:' + location.pathname + '#' + created;
+  const status = document.getElementById('status');
+  const qs = [...form.querySelectorAll('fieldset.q')];
+  const own = q => q.querySelector('textarea') || { value: '' };
+  document.getElementById('where').textContent = 'Сохраняй файл ' + answersName + ' в папку страницы: ' + path.slice(0, path.lastIndexOf('/') + 1);
+
+  const collect = () => {
+    const state = {};
+    for (const q of qs) {
+      const picked = q.querySelector('input[type=radio]:checked');
+      state[q.dataset.q] = { pick: picked ? picked.value : '', own: own(q).value };
+    }
+    return state;
+  };
+  const store = () => { try { localStorage.setItem(key, JSON.stringify(collect())); } catch (e) { /* хранилище недоступно */ } };
+  const restore = () => {
+    let state = null;
+    try { state = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return false; }
+    if (!state) return false;
+    for (const q of qs) {
+      const s = state[q.dataset.q];
+      if (!s) continue;
+      const input = s.pick && q.querySelector('input[type=radio][value="' + CSS.escape(s.pick) + '"]');
+      if (input) input.checked = true;
+      own(q).value = s.own || '';
+    }
+    return true;
+  };
+
+  // Текст файла ответов. Проверка вызывает window.arrmaAnswers() без окна сохранения.
+  // Свой ответ идёт цитатой, чтобы его строки не путались со структурой файла.
+  const buildAnswers = () => {
+    const out = ['# Ответы: ' + document.title, '', 'Страница: `' + path + '`', 'Версия страницы: ' + created, 'Сохранено: ' + new Date().toISOString(), ''];
+    for (const q of qs) {
+      const legend = q.querySelector('legend').textContent.trim();
+      const picked = q.querySelector('input[type=radio]:checked');
+      const label = picked ? (picked.closest('label').querySelector('b') || picked.closest('label')).textContent.trim() : '';
+      const text = own(q).value.trim();
+      out.push('## ' + legend, '', '- Выбор: ' + (picked ? picked.value + ' — ' + label : 'нет'));
+      out.push(text ? '- Свой ответ:\n' + text.split('\n').map(l => '  > ' + l).join('\n') : '- Свой ответ: нет', '');
+    }
+    return out.join('\n');
+  };
+  window.arrmaAnswers = buildAnswers;
+
+  let handle = null;
+  const time = () => new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  const download = (text, why) => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type: 'text/markdown;charset=utf-8' }));
+    a.download = answersName;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    status.textContent = why + 'Скачано в «Загрузки»: ' + answersName + ' · ' + time() + '.';
+  };
+  const save = async () => {
+    const text = buildAnswers();
+    if (!window.showSaveFilePicker) return download(text, '');
+    try {
+      if (!handle) handle = await window.showSaveFilePicker({ suggestedName: answersName, id: 'arrma-visual', types: [{ description: 'Markdown', accept: { 'text/markdown': ['.md'] } }] });
+      const w = await handle.createWritable();
+      await w.write(text);
+      await w.close();
+      status.textContent = 'Сохранено в ' + handle.name + ' · ' + time() + '.';
+    } catch (e) {
+      if (e.name === 'AbortError') { status.textContent = 'Сохранение отменено.'; return; }
+      handle = null;
+      download(text, 'Файл записать не удалось (' + e.message + '). ');
+    }
+  };
+
+  for (const q of qs) {
+    const clear = document.createElement('button');
+    clear.type = 'button';
+    clear.className = 'clear';
+    clear.textContent = 'снять выбор';
+    clear.addEventListener('click', () => { q.querySelectorAll('input[type=radio]').forEach(r => { r.checked = false; }); store(); });
+    q.querySelector('.own') ? q.querySelector('.own').before(clear) : q.append(clear);
+  }
+  if (restore()) status.textContent = 'Ответы восстановлены после перезагрузки. Нажми «Сохранить», чтобы записать их в файл.';
+  form.addEventListener('input', store);
+  document.getElementById('save').addEventListener('click', save);
+})();
+</script>
+</body>
+</html>

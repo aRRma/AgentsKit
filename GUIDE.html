@@ -260,6 +260,14 @@ ol.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column;
         <p class="get"><b>Получишь:</b> отчёт в <code>docs/audits/</code>: ошибки с местом в коде и правкой, не описанное, противоречия между документами, повторы одной ошибки, что не проверено и какие команды запускались. В чате коротко и вопрос, исправлять ли. Сам документацию не правит.</p>
       </div>
       <div class="c x">
+        <h3>/arrma-visual</h3>
+        <p>Когда сложное из обсуждения проще увидеть: вопрос или анализ, этап, вся задача, разбор кода. Только командой: сама не включается.</p>
+        <div class="ex"><span class="lbl">Примеры</span>
+          <div class="say"><span><b>/arrma-visual</b> задача</span><button class="copy" data-copy="/arrma-visual задача">копия</button></div>
+          <div class="say"><span><b>/arrma-visual</b> код вход в систему</span><button class="copy" data-copy="/arrma-visual код ">копия</button></div></div>
+        <p class="get"><b>Получишь:</b> сначала вопрос, что показать и в какую папку. Потом одну HTML-страницу со схемой, карточками и таблицами в <code>visual/</code> папки задачи, вне задачи — в <code>docs/visual/</code>. Агент сам проверяет её в Playwright. На вопросы отвечаешь на странице и жмёшь «Сохранить»: файл <code>&lt;страница&gt;.answers.md</code> сохраняешь в папку страницы, она подсказана на странице. Пишешь «закончил» — агент читает ответы, а для страницы по задаче записывает их в «Решения».</p>
+      </div>
+      <div class="c x">
         <h3>/arrma-eli5</h3>
         <p>Когда ответ агента сложный или длинный.</p>
         <div class="ex"><span class="lbl">Примеры</span>
@@ -308,11 +316,12 @@ ol.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column;
 
   <section id="files">
     <h2>Файлы задачи</h2>
-    <p class="sub">На каждую задачу одна папка с тремя файлами. Папка берётся из <code>CLAUDE.md</code> проекта, иначе это <code>docs/tasks/&lt;задача&gt;/</code>.</p>
+    <p class="sub">На каждую задачу одна папка с тремя файлами, а после <code>/arrma-visual</code> — ещё папка <code>visual/</code>. Папка берётся из <code>CLAUDE.md</code> проекта, иначе это <code>docs/tasks/&lt;задача&gt;/</code>.</p>
     <div class="rows">
       <div class="row"><span class="k">requirements.md</span><span>Требования твоими словами: что обязательно, какие ограничения, что не делаем. В разделе «Решения» копятся твои ответы на вопросы.</span></div>
       <div class="row"><span class="k">analysis.md</span><span>Как устроено сейчас, что менять, риски, вопросы с номерами Q1, Q2.</span></div>
       <div class="row"><span class="k">plan.md</span><span>Этапы, последний — «Полный прогон» (все тесты и смоук). У каждого сделанного этапа отметка и строки «База», «Файлы этапа», «Проверено». Строка «Стоп» значит, что агент остановился и ждёт тебя. Строка «Ждёт: документация» в этапе — правка документации ждёт твоего «да». Внизу отклонённые находки и строки «Ждёт», чтобы не поднимать их снова.</span></div>
+      <div class="row"><span class="k">visual/</span><span>Страницы <code>/arrma-visual</code> и ответы к ним <code>&lt;страница&gt;.answers.md</code>. Появляется, только если вызывал команду. Страницы вне задачи лежат в <code>docs/visual/</code>.</span></div>
     </div>
     <p class="small">Задача набора — папка с <code>requirements.md</code>. Старые задачи проекта в другом формате набор не трогает. Всё состояние задачи лежит в этих файлах, поэтому между шагами можно делать <code>/clear</code>. Если задач несколько, агент берёт незаконченную, а когда таких несколько, спрашивает. Агент не коммитит их, пока не попросишь.</p>
   </section>
@@ -352,7 +361,7 @@ ol.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column;
           <li>Проверяющие не могут править файлы.</li>
           <li>Проверяющие не могут запускать других агентов.</li>
           <li>Проверяющим закрыты MCP-серверы Claude_Docs, GitHub, MongoDB, Playwright и Telegram.</li>
-          <li>Команды сами разрешают себе только чтение из git, а <code>/arrma-task-stage</code> ещё снимок <code>git stash create</code>. Сборку и тесты разрешаешь ты.</li>
+          <li>Команды сами разрешают себе только чтение из git, а <code>/arrma-task-stage</code> ещё снимок <code>git stash create</code>. <code>/arrma-visual</code> ещё разрешает себе <code>date</code> для метки времени страницы, а для её проверки Playwright и удаление <code>.playwright-mcp</code>. Действует ли это для Playwright без правила в твоих настройках, не проверено: если нет, проверка будет спрашивать подтверждение. Сборку и тесты разрешаешь ты.</li>
         </ul>
       </div>
       <div class="box">

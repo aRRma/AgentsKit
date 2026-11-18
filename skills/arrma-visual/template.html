@@ -1,0 +1,283 @@
+<!doctype html>
+<!-- Шаблон arrma-visual. Агент копирует файл, меняет data-created на время создания,
+     заполняет блоки с пометкой ЗАМЕНИТЬ и удаляет ненужные. Внешних запросов нет. -->
+<html lang="ru" data-created="ЗАМЕНИТЬ-2026-01-01T00:00">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>ЗАМЕНИТЬ: тема страницы</title>
+<style>
+/* Палитра из GUIDE.html. Синий = основное, оранжевый = акцент и рекомендация, зелёный = сделано. */
+:root {
+  --bg: #EEF1F5; --surface: #FFFFFF; --ink: #161D27; --muted: #586474; --line: #D3DAE3;
+  --step: #1B5AA3; --step-soft: #E1ECF9; --check: #B04A0A; --check-soft: #FCEADB;
+  --chip: #E6EAF0; --ok: #1C774A; --warn: #915500;
+  --sans: "Segoe UI", system-ui, sans-serif;
+  --mono: Consolas, "Cascadia Mono", monospace;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #10141A; --surface: #19202A; --ink: #E7EBF1; --muted: #9AA7B7; --line: #2B3543;
+  --step: #82B6F2; --step-soft: #1B2A3F; --check: #F2A56B; --check-soft: #38271A;
+  --chip: #232C38; --ok: #6DCB9C; --warn: #E3B55F; color-scheme: dark } }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--sans); padding: 32px 16px 64px; }
+.wrap { max-width: 940px; margin: 0 auto; display: flex; flex-direction: column; gap: 44px; }
+section { display: flex; flex-direction: column; gap: 14px; }
+h1 { font-size: 36px; line-height: 1.15; margin: 0; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+h2 { font-size: 24px; line-height: 1.25; margin: 0; font-weight: 700; text-wrap: balance; }
+h3 { font-size: 16px; margin: 0; font-weight: 600; }
+p { margin: 0; }
+.lead { color: var(--muted); font-size: 18px; max-width: 62ch; margin-top: 10px; }
+.meta { color: var(--muted); font-size: 13px; margin-top: 8px; }
+.sub { color: var(--muted); max-width: 70ch; }
+code { font-family: var(--mono); font-size: 0.88em; background: var(--chip); padding: 1px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+a { color: var(--step); }
+:focus-visible { outline: 2px solid var(--step); outline-offset: 2px; }
+
+/* метки: смысл несёт текст, цвет только помогает */
+.tag { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 8px; border-radius: 999px; background: var(--chip); color: var(--muted); }
+.tag.ok { color: var(--ok); } .tag.warn { color: var(--warn); } .tag.acc { color: var(--check); background: var(--check-soft); }
+.guess { border-bottom: 1px dashed var(--warn); }
+.guess::after { content: " (догадка)"; color: var(--warn); font-size: 0.85em; }
+
+/* схема */
+figure { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; overflow-x: auto; }
+figure svg { display: block; width: 100%; min-width: 560px; height: auto; }
+figcaption { margin-top: 10px; font-size: 15px; color: var(--muted); }
+figcaption b { color: var(--ink); }
+.node { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+.node.acc { fill: var(--check-soft); stroke: var(--check); }
+.ntext { fill: var(--ink); font: 600 14px var(--sans); }
+.nsub { fill: var(--muted); font: 12px var(--mono); }
+.edge { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+.etext { fill: var(--muted); font: italic 12px var(--sans); }
+.arrowhead { fill: var(--muted); }
+
+/* карточки */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.card.acc { border-color: var(--check); }
+.card .tag { align-self: flex-start; }
+.card p { font-size: 15px; color: var(--muted); }
+
+/* таблица */
+.tbl { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 13px; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.mark { background: var(--check-soft); }
+
+/* дорожка этапов */
+.track { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.track li { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--line); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.track li.done { border-top-color: var(--ok); }
+.track li.now { border-top-color: var(--check); }
+.track .st { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.track li.done .st { color: var(--ok); } .track li.now .st { color: var(--check); }
+
+/* вопросы */
+fieldset.q { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+fieldset.q legend { float: left; width: 100%; padding: 0; font-weight: 600; font-size: 17px; }
+.q .why { color: var(--muted); font-size: 14.5px; }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.opt:hover { border-color: var(--step); }
+.opt:has(input:checked) { border-color: var(--step); background: var(--step-soft); }
+.opt input { margin-top: 4px; accent-color: var(--step); }
+.opt .txt { flex: 1; min-width: 0; }
+.opt .txt span:not(.tag) { color: var(--muted); }
+.q .clear { align-self: flex-start; font: 13px var(--sans); color: var(--muted); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+.opt.rec .tag { margin-left: 6px; }
+.own { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--muted); }
+.own textarea { font: 15px/1.45 var(--sans); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-height: 64px; resize: vertical; }
+.savebar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
+.savebar button { font: 600 15px var(--sans); color: #FFFFFF; background: var(--step); border: 0; border-radius: 8px; padding: 9px 18px; cursor: pointer; }
+@media (prefers-color-scheme: dark) { .savebar button { color: #10141A; } }
+.savebar .status { color: var(--muted); font-size: 14px; flex: 1; min-width: 200px; }
+
+@media (max-width: 760px) {
+  body { padding-top: 20px; }
+  h1 { font-size: 28px; } h2 { font-size: 21px; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <!-- Первый экран: вывод одной фразой и главная схема. -->
+  <header>
+    <h1>ЗАМЕНИТЬ: вывод одной фразой</h1>
+    <p class="lead">ЗАМЕНИТЬ: два-три предложения — что решаем и почему это важно.</p>
+    <p class="meta">ЗАМЕНИТЬ: режим · задача · дата · источники: <code>файл:строка</code></p>
+  </header>
+
+  <!-- Схема: не больше 9 узлов и 12 стрелок; у каждой стрелки глагол; подпись — утверждение.
+       Подпись стрелки должна уместиться между узлами: длинный глагол — раздвинь узлы и расширь viewBox.
+       Вторая схема на странице — свой id маркера (ah2) и url(#ah2). -->
+  <figure>
+    <svg viewBox="0 30 720 84" role="img" aria-label="ЗАМЕНИТЬ: что показывает схема">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="arrowhead" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      <rect class="node" x="10" y="40" width="190" height="64" rx="10"/>
+      <text class="ntext" x="105" y="68" text-anchor="middle">Узел A</text>
+      <text class="nsub" x="105" y="88" text-anchor="middle">file.cs:10</text>
+      <rect class="node acc" x="265" y="40" width="190" height="64" rx="10"/>
+      <text class="ntext" x="360" y="68" text-anchor="middle">Узел B</text>
+      <text class="nsub" x="360" y="88" text-anchor="middle">file.cs:42</text>
+      <rect class="node" x="520" y="40" width="190" height="64" rx="10"/>
+      <text class="ntext" x="615" y="68" text-anchor="middle">Узел C</text>
+      <text class="nsub" x="615" y="88" text-anchor="middle">file.cs:77</text>
+      <path class="edge" d="M200,72 L263,72" marker-end="url(#ah)"/>
+      <text class="etext" x="232" y="62" text-anchor="middle">вызывает</text>
+      <path class="edge" d="M455,72 L518,72" marker-end="url(#ah)"/>
+      <text class="etext" x="487" y="62" text-anchor="middle">пишет</text>
+    </svg>
+    <figcaption><b>ЗАМЕНИТЬ: утверждение схемы.</b> Пояснение одной фразой.</figcaption>
+  </figure>
+
+  <!-- Заголовок раздела — вывод, а не тема. -->
+  <section>
+    <h2>ЗАМЕНИТЬ: вывод раздела карточками</h2>
+    <div class="cards">
+      <div class="card"><span class="tag ok">сделано</span><h3>Карточка</h3><p>Текст с <code>file:line</code>.</p></div>
+      <div class="card acc"><span class="tag acc">главное</span><h3>Акцент</h3><p>Акцент — на одном-двух элементах.</p></div>
+      <div class="card"><span class="tag warn">риск</span><h3>Карточка</h3><p><span class="guess">Непроверенное утверждение</span>.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>ЗАМЕНИТЬ: вывод сравнения таблицей</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Вариант</th><th>Плюс</th><th>Минус</th></tr></thead>
+      <tbody>
+        <tr><td>A</td><td class="mark">Решающая клетка отмечена</td><td>—</td></tr>
+        <tr><td>B</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>ЗАМЕНИТЬ: где мы по этапам</h2>
+    <ol class="track">
+      <li class="done"><span class="st">сделано</span><h3>Этап 1</h3><p class="sub">коротко</p></li>
+      <li class="now"><span class="st">сейчас</span><h3>Этап 2</h3><p class="sub">коротко</p></li>
+      <li><span class="st">дальше</span><h3>Этап 3</h3><p class="sub">коротко</p></li>
+    </ol>
+  </section>
+
+  <!-- Вопросы: name у radio и textarea — номер вопроса (Q1, Q1-own). Рекомендация — класс rec и метка.
+       Нет вопросов — удали весь раздел, скрипт это переносит. -->
+  <section id="questions">
+    <h2>Вопросы к тебе</h2>
+    <p class="sub">Выбери вариант или напиши свой ответ и нажми «Сохранить». Ответы не пропадут при перезагрузке вкладки.</p>
+    <p class="sub" id="where"></p>
+      <fieldset class="q" data-q="Q1">
+        <legend>Q1. ЗАМЕНИТЬ: вопрос?</legend>
+        <p class="why">ЗАМЕНИТЬ: что решаем и почему спрашиваем.</p>
+        <label class="opt rec"><input type="radio" name="Q1" value="A"><span class="txt"><b>Вариант A</b><span class="tag acc">рекомендую</span><br><span>что будет и почему лучше</span></span></label>
+        <label class="opt"><input type="radio" name="Q1" value="B"><span class="txt"><b>Вариант B</b><br><span>что будет</span></span></label>
+        <label class="own">Свой ответ<textarea name="Q1-own" rows="2"></textarea></label>
+      </fieldset>
+    <div class="savebar">
+      <button type="button" id="save">Сохранить</button>
+      <span class="status" id="status" role="status">Ответы ещё не сохранены в файл.</span>
+    </div>
+  </section>
+
+</main>
+<script>
+(() => {
+  const form = document.getElementById('questions');
+  if (!form) return;
+  const path = decodeURIComponent(location.pathname);
+  const answersName = path.split('/').pop().replace(/\.html?$/i, '') + '.answers.md';
+  const created = document.documentElement.dataset.created;
+  const key = 'arrma-visual:' + location.pathname + '#' + created;
+  const status = document.getElementById('status');
+  const qs = [...form.querySelectorAll('fieldset.q')];
+  const own = q => q.querySelector('textarea') || { value: '' };
+  document.getElementById('where').textContent = 'Сохраняй файл ' + answersName + ' в папку страницы: ' + path.slice(0, path.lastIndexOf('/') + 1);
+
+  const collect = () => {
+    const state = {};
+    for (const q of qs) {
+      const picked = q.querySelector('input[type=radio]:checked');
+      state[q.dataset.q] = { pick: picked ? picked.value : '', own: own(q).value };
+    }
+    return state;
+  };
+  const store = () => { try { localStorage.setItem(key, JSON.stringify(collect())); } catch (e) { /* хранилище недоступно */ } };
+  const restore = () => {
+    let state = null;
+    try { state = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return false; }
+    if (!state) return false;
+    for (const q of qs) {
+      const s = state[q.dataset.q];
+      if (!s) continue;
+      const input = s.pick && q.querySelector('input[type=radio][value="' + CSS.escape(s.pick) + '"]');
+      if (input) input.checked = true;
+      own(q).value = s.own || '';
+    }
+    return true;
+  };
+
+  // Текст файла ответов. Проверка вызывает window.arrmaAnswers() без окна сохранения.
+  // Свой ответ идёт цитатой, чтобы его строки не путались со структурой файла.
+  const buildAnswers = () => {
+    const out = ['# Ответы: ' + document.title, '', 'Страница: `' + path + '`', 'Версия страницы: ' + created, 'Сохранено: ' + new Date().toISOString(), ''];
+    for (const q of qs) {
+      const legend = q.querySelector('legend').textContent.trim();
+      const picked = q.querySelector('input[type=radio]:checked');
+      const label = picked ? (picked.closest('label').querySelector('b') || picked.closest('label')).textContent.trim() : '';
+      const text = own(q).value.trim();
+      out.push('## ' + legend, '', '- Выбор: ' + (picked ? picked.value + ' — ' + label : 'нет'));
+      out.push(text ? '- Свой ответ:\n' + text.split('\n').map(l => '  > ' + l).join('\n') : '- Свой ответ: нет', '');
+    }
+    return out.join('\n');
+  };
+  window.arrmaAnswers = buildAnswers;
+
+  let handle = null;
+  const time = () => new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  const download = (text, why) => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type: 'text/markdown;charset=utf-8' }));
+    a.download = answersName;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    status.textContent = why + 'Скачано в «Загрузки»: ' + answersName + ' · ' + time() + '.';
+  };
+  const save = async () => {
+    const text = buildAnswers();
+    if (!window.showSaveFilePicker) return download(text, '');
+    try {
+      if (!handle) handle = await window.showSaveFilePicker({ suggestedName: answersName, id: 'arrma-visual', types: [{ description: 'Markdown', accept: { 'text/markdown': ['.md'] } }] });
+      const w = await handle.createWritable();
+      await w.write(text);
+      await w.close();
+      status.textContent = 'Сохранено в ' + handle.name + ' · ' + time() + '.';
+    } catch (e) {
+      if (e.name === 'AbortError') { status.textContent = 'Сохранение отменено.'; return; }
+      handle = null;
+      download(text, 'Файл записать не удалось (' + e.message + '). ');
+    }
+  };
+
+  for (const q of qs) {
+    const clear = document.createElement('button');
+    clear.type = 'button';
+    clear.className = 'clear';
+    clear.textContent = 'снять выбор';
+    clear.addEventListener('click', () => { q.querySelectorAll('input[type=radio]').forEach(r => { r.checked = false; }); store(); });
+    q.querySelector('.own') ? q.querySelector('.own').before(clear) : q.append(clear);
+  }
+  if (restore()) status.textContent = 'Ответы восстановлены после перезагрузки. Нажми «Сохранить», чтобы записать их в файл.';
+  form.addEventListener('input', store);
+  document.getElementById('save').addEventListener('click', save);
+})();
+</script>
+</body>
+</html>
